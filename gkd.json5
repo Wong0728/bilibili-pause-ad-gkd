@@ -1,0 +1,95 @@
+// 哔哩哔哩 视频类页面广告规则
+// 依据 GKD 快照生成: 1794014216096 / 1794014298911 / 1794014395018 (广告倒计时)
+//                     1794014220019 / 1794014398660 / 1794014302303 (暂停页广告卡片)
+//                     1794014402434 (屏蔽广告面板)
+// 选择器已通过官方 @gkd-kit/selector 解析与类型校验, 并在全部快照控件树上端到端验证命中
+// v2: activityIds 扩大到竖屏模式/播放列表/旧版详情页(同源广告体系, 未验证页面规则不触发则无副作用)
+{
+  id: 20261107,
+  name: 'B站视频页广告-自定义',
+  version: 2,
+  author: 'Qoder',
+  // 订阅源地址, GKD 会自动检查更新:
+  updateUrl: 'https://raw.githubusercontent.com/Wong0728/bilibili-pause-ad-gkd/main/gkd.json5',
+  checkUpdateUrl: 'https://raw.githubusercontent.com/Wong0728/bilibili-pause-ad-gkd/main/gkd.json5',
+  categories: [],
+  globalGroups: [],
+  apps: [
+    {
+      id: 'tv.danmaku.bili',
+      name: '哔哩哔哩',
+      groups: [
+        // 快照 1794014216096: control_container > RecyclerView > ComposeView
+        //   > View > View > [TextView'2秒' TextView'后将展示广告' Button'取消'(clickable)]
+        {
+          key: 1,
+          name: '局部广告-播放器广告倒计时-自动取消',
+          desc: '播放器出现「X秒后将展示广告」倒计时条时自动点击[取消], 阻止暂停页广告弹出',
+          activityIds: [
+            'com.bilibili.ship.theseus.detail.UnitedBizDetailsActivity',
+            'com.bilibili.ship.theseus.playlist.UnitedPlaylistActivity',
+            'com.bilibili.video.story.StoryVideoActivity',
+            'com.bilibili.video.story.StoryTransparentActivity',
+            'com.bilibili.video.videodetail.VideoDetailsActivity',
+          ],
+          rules: [
+            {
+              matches:
+                '[text*="后将展示广告"][visibleToUser=true] + @Button[text="取消"][visibleToUser=true]',
+            },
+          ],
+        },
+        // 快照 1794014220019: 广告卡片右上角两个可点击 View,
+        //   子节点 desc 分别为「不感兴趣」(⋮) 和「关闭暂停页」(X)
+        {
+          key: 2,
+          name: '局部广告-暂停页广告-自动关闭',
+          desc: '暂停视频弹出广告卡片时自动点击右上角X[关闭暂停页] (与下一组二选一)',
+          activityIds: [
+            'com.bilibili.ship.theseus.detail.UnitedBizDetailsActivity',
+            'com.bilibili.ship.theseus.playlist.UnitedPlaylistActivity',
+            'com.bilibili.video.story.StoryVideoActivity',
+            'com.bilibili.video.story.StoryTransparentActivity',
+            'com.bilibili.video.videodetail.VideoDetailsActivity',
+          ],
+          rules: [
+            {
+              matches:
+                '@View[clickable=true][visibleToUser=true] > [desc="关闭暂停页"]',
+            },
+          ],
+        },
+        // 快照 1794014402434: 底部面板选项均为 clickable View > 子节点 desc
+        //   相似内容过多 / up主不感兴趣 / 分区不感兴趣 / 我要投诉 / 我为什么会看到此广告
+        {
+          key: 3,
+          name: '分段广告-暂停页广告-自动屏蔽',
+          desc: '点击广告卡片[更多/不感兴趣]按钮-自动选择屏蔽原因[相似内容过多] (默认关闭, 与上一组二选一)',
+          enable: false,
+          activityIds: [
+            'com.bilibili.ship.theseus.detail.UnitedBizDetailsActivity',
+            'com.bilibili.ship.theseus.playlist.UnitedPlaylistActivity',
+            'com.bilibili.video.story.StoryVideoActivity',
+            'com.bilibili.video.story.StoryTransparentActivity',
+            'com.bilibili.video.videodetail.VideoDetailsActivity',
+          ],
+          rules: [
+            {
+              key: 0,
+              name: '点击更多(不感兴趣)按钮',
+              matches:
+                '@View[clickable=true][visibleToUser=true] > [desc="不感兴趣"]',
+            },
+            {
+              key: 1,
+              name: '选择屏蔽原因[相似内容过多]',
+              preKeys: [0],
+              matches:
+                '@[clickable=true][visibleToUser=true] > [desc="相似内容过多"]',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
